@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+    <title>My Prediction!</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <style>
+        body {
+
+          background-image: url(img.jpg);
+          background-position: center center;
+            /* Background image doesn't tile */
+  background-repeat: no-repeat;
+  
+  /* Background image is fixed in the viewport so that it doesn't move when 
+     the content's height is greater than the image's height */
+  background-attachment: fixed;
+  
+  /* This is what makes the background image rescale based
+     on the container's size */
+  background-size: cover;
+  
+  /* Set a background color that will be displayed
+     while the background image is loading */
+  background-color: #464646;
+      
+      }
+
+  @media only screen and (max-width: 767px) {
+  body {
+    /* The file size of this background image is 93% smaller
+       to improve page load speed on mobile internet connections */
+    background-image: url(img.jpg);
+  }
+}
+    </style>
+</head>
+
+<body>
+
+  <script type="text/javascript" src="https://code.responsivevoice.org/responsivevoice.js"></script>
+
+  <div id="maintext" style="background-color:black; position:absolute; margin:auto; width:700px; height:300px; text-align:center; top:0; bottom: 0; left: 0; right: 0;">
+    <h1 class="text-light mb-5"> My Prediction </h1>
+    <h3 class="text-light"> My algorithm gave this prediction: </h3>
+    
+    <table class="table-bordered text-light" style="width:100%">
+      <tr>
+        <th>Rank</th>
+        <th>Class</th>
+        <th>Assamese</th>
+        <th>Speech</th>
+      </tr>
+
+      <tr>
+        <td>Most Likely:</td>
+        <td id = "txt">{{ predictions.class1 }}</td>
+        <td>{{ predictions.class2 }}</td>
+        <td><input type="button" onclick="textSpeak()" value="Play"></td>
+      </tr>
+
+    </table>
+    <script>
+      function textSpeak() {
+        var text = document.getElementById('txt').innerHTML;
+        responsiveVoice.speak(text);
+      }
+
+    </script>
+
+    <a href="{{ url_for('main_page') }}"><button class="button mt-3">Try again?</button></a>
+  </div>
+
+</body>
+</html>
