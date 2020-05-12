@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, redirect, url_for, render_template
-#from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -34,31 +34,38 @@ def init():
     graph = tf.compat.v1.get_default_graph()
 
 global model
+b = load_model('NewLeafWeights.h5')
 
-b = load_model('Model1.h5')
+
+@app.route('/', methods=['GET', 'POST'])
+def main_page():
+    if request.method == 'POST':
+        file = request.files['file']
+        filename = secure_filename(file.filename)
+        c = os.path.join('uploads', filename)
+        file.save(c)
+        return redirect(url_for('prediction', filename=filename))
+    return render_template('index.html')
+
 
 @app.route('/prediction/<filename>')
 def prediction(filename):
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and allowed_image(file.filename):
-                filename = file.filename
-    
-                a = os.path.join('uploads', filename)
+
+        a = os.path.join('uploads', filename)
                 
-                img = image.load_img(a, target_size=(224, 224))
-                img_tensor = image.img_to_array(img)  
-                img_tensor /= 255.  
+        img = image.load_img(a, target_size=(224, 224))
+        img_tensor = image.img_to_array(img)  
+        img_tensor /= 255.  
                 
-                p = img_tensor.reshape(1,224, 224, 3)
-                features = conv_base.predict(p)
+        p = img_tensor.reshape(1,224, 224, 3)
+        features = conv_base.predict(p)
                 
-                try:
+        try:
                         prediction = b.predict(features)
-                except:
+        except:
                         prediction = b.predict(features.reshape(1, 7*7*512))
                 
-                with graph.as_default():
+        with graph.as_default():
                     tf.compat.v1.keras.backend.set_session(sess)        
                     classes = ["Apple", "Blueberry", "Pepper Bell", "Soybean", "Tomato"]
                     classesAs = ["আপেল",  "ব্লুবেরি",  "কেপছিকাম",  "সয়াবিন", "বিলাহী"]
@@ -70,12 +77,9 @@ def prediction(filename):
                             "class1":classes[y[4]],
                             "class2":classesAs[y[4]]
                     }
-                
-        else:
-                print("That file extension is not allowed")
-                return redirect(url_for('prediction', filename=filename))
+               
             
-    return render_template('predict.html', predictions= predictions)
+        return render_template('predict.html', predictions= predictions)
 
 if __name__ == '__main__':
     init()
