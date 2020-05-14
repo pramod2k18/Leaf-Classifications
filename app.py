@@ -1,87 +1,88 @@
+
+from flask import Flask, render_template, request
+import numpy as np
+import tensorflow as tf
+from keras.preprocessing.image import load_img
+from keras.preprocessing.image import img_to_array
+from tensorflow.keras.models import load_model
 import os
-from flask import Flask, request, redirect, url_for, render_template
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from keras.applications import VGG16
-import numpy as np
-from keras.preprocessing import image
+#Set Max size of file as 10MB.
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
-#to remove CUDA Error
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
-
-config = ConfigProto()
-config.gpu_options.allow_growth = True
-session = InteractiveSession(config=config)
-
-
-
-conv_base = VGG16(weights='imagenet', 
-                      include_top=False,
-                      input_shape= (224, 224, 3))
-
-global sess
-sess = tf.compat.v1.Session()
-tf.compat.v1.keras.backend.set_session(sess)
-
+#Allow files with extension png, jpg and jpeg
+ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg']
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init():
     global graph
     graph = tf.compat.v1.get_default_graph()
 
-global model
-b = load_model('NewLeafWeights.h5')
+def read_image(filename):
+    # Load the image
+    img = load_img(filename, grayscale=False, target_size=(224, 224))
+    # Convert the image to array
+    img = img_to_array(img)
+    # Reshape the image into a sample of 3 channel
+    img = img.reshape(1, 224, 224, 3)
+    # Prepare it as pixel data
+    img = img.astype('float32')
+    img = img / 255.0
+    return img
 
 
 @app.route('/', methods=['GET', 'POST'])
 def main_page():
+
+        return render_template('index.html')
+
+
+@app.route("/predict", methods = ['GET','POST'])
+def predict():
     if request.method == 'POST':
         file = request.files['file']
-        filename = secure_filename(file.filename)
-        c = os.path.join('uploads', filename)
-        file.save(c)
-        return redirect(url_for('prediction', filename=filename))
-    return render_template('index.html')
-
-
-@app.route('/prediction/<filename>')
-def prediction(filename):
-
-        a = os.path.join('uploads', filename)
-                
-        img = image.load_img(a, target_size=(224, 224))
-        img_tensor = image.img_to_array(img)  
-        img_tensor /= 255.  
-                
-        p = img_tensor.reshape(1,224, 224, 3)
-        features = conv_base.predict(p)
-                
         try:
-                        prediction = b.predict(features)
-        except:
-                        prediction = b.predict(features.reshape(1, 7*7*512))
+            if file and allowed_file(file.filename):
+                filename = file.filename
+                file_path = os.path.join('uploads', filename)
+                file.save(file_path)
+                img = read_image(file_path)
                 
-        with graph.as_default():
-                    tf.compat.v1.keras.backend.set_session(sess)        
-                    classes = ["Apple", "Blueberry", "Pepper Bell", "Soybean", "Tomato"]
-                    classesAs = ["আপেল",  "ব্লুবেরি",  "কেপছিকাম",  "সয়াবিন", "বিলাহী"]
-                    
-                    x = np.array(prediction[0])
-                    y = np.argsort(x)
-                    
-                    predictions = {
-                            "class1":classes[y[4]],
-                            "class2":classesAs[y[4]]
-                    }
-               
-            
-        return render_template('predict.html', predictions= predictions)
 
-if __name__ == '__main__':
+                with graph.as_default():
+                    model= load_model("leaf_vgg.h5")
+                    predict = model.predict(img)
+                    class_prediction=np.argmax(predict,axis=1)
+
+                    if class_prediction[0] == 0:
+                        product1 = "Apple"
+                        product2 = "আপেল"
+                    elif class_prediction[0] == 1:
+                        product1 = "Bluebery"
+                        product2 = "ব্লুবেরি"
+                    elif class_prediction[0] == 2:
+                        product1 = "Pepper"
+                        product2 = "কেপছিকাম"
+                    elif class_prediction[0] == 3:
+                        product1 = "Soybean"
+                        product2 = "সয়াবিন"
+                    else:
+                        product1 = "Tomato"
+                        product2 = "বিলাহী"
+                return render_template('predict.html', product1 = product1, product2 = product2)
+        except Exception as e:
+            return "Unable to read the file. Please check if the file extension is correct."
+
+    return render_template('predict.html')
+
+if __name__ == "__main__":
     init()
-    app.debug = True
-    app.run() 
+    app.run()
+
+
+
+
