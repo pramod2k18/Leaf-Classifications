@@ -23,13 +23,10 @@ def init():
     graph = tf.compat.v1.get_default_graph()
 
 def read_image(filename):
-    # Load the image
+    
     img = load_img(filename, grayscale=False, target_size=(224, 224))
-    # Convert the image to array
     img = img_to_array(img)
-    # Reshape the image into a sample of 3 channel
     img = img.reshape(1, 224, 224, 3)
-    # Prepare it as pixel data
     img = img.astype('float32')
     img = img / 255.0
     return img
@@ -54,26 +51,36 @@ def predict():
                 
 
                 with graph.as_default():
-                    model= load_model("leaf_vgg.h5")
-                    predict = model.predict(img)
-                    class_prediction=np.argmax(predict,axis=1)
+                    model1 = load_model("Leaf_vs_Non-Leaf.h5")
+                    predict1 = model1.predict(img)
+                    class_prediction1 = np.argmax(predict1,axis=1)
 
-                    if class_prediction[0] == 0:
-                        product1 = "Apple"
-                        product2 = "আপেল"
-                    elif class_prediction[0] == 1:
-                        product1 = "Bluebery"
-                        product2 = "ব্লুবেরি"
-                    elif class_prediction[0] == 2:
-                        product1 = "Pepper"
-                        product2 = "কেপছিকাম"
-                    elif class_prediction[0] == 3:
-                        product1 = "Soybean"
-                        product2 = "সয়াবিন"
+                    if class_prediction1[0] == 0:
+                        model2 = load_model("leaf_vgg.h5")
+                        predict2 = model2.predict(img)
+                        class_prediction2=np.argmax(predict2,axis=1)
+                        
+                        if class_prediction2[0] == 0:
+                            product1 = "Apple"
+                            product2 = "আপেল"
+                        elif class_prediction2[0] == 1:
+                            product1 = "Bluebery"
+                            product2 = "ব্লুবেরি"
+                        elif class_prediction2[0] == 2:
+                            product1 = "Pepper"
+                            product2 = "কেপছিকাম"
+                        elif class_prediction2[0] == 3:
+                            product1 = "Soybean"
+                            product2 = "সয়াবিন"
+                        else:
+                            product1 = "Tomato"
+                            product2 = "বিলাহী"
+                        
                     else:
-                        product1 = "Tomato"
-                        product2 = "বিলাহী"
+                        product1 = "This is not a Leaf"
+                        product2 = "Non-Leaf"
                 return render_template('predict.html', product1 = product1, product2 = product2)
+                                        
         except Exception as e:
             return "Unable to read the file. Please check if the file extension is correct."
 
