@@ -1,5 +1,5 @@
 # Leaf-Classifications
-# Final year project
-# Deep Learning
-# Html, CSS, JS
-# AWS
+Final year project
+Deep Learning
+Html, CSS, JS
+AWS
